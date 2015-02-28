@@ -15,9 +15,12 @@ def encoding_page(html_text, enc):
 
 def get_keywords_list(html_text, enc):
 	content = encoding_page(html_text, enc)
-	keywordregex = re.compile("<meta name=\"Keywords\".*?content=\"([^\"]*)\"")
+	keywordregex = re.compile("<meta name=\"[kK]eywords\".*?content=\"([^\"]*)\"")
 	keywordlist = keywordregex.findall(content)
-	return str(keywordlist)[3:-2].split(',')
+	if len(keywordlist) == 0:
+		return ['chuje']
+	else:
+		return str(keywordlist)[3:-2].split(',')
 
 def remove_spaces(s):
 	if s[0] == ' ':
@@ -38,7 +41,10 @@ def home():
 	enc = 'utf8'
 	if request.method == 'GET': return render_template("index.html")
 	if request.method == 'POST':
-		html_object = urllib2.urlopen(request.form['url'])
+		if request.form['url'][:7] == 'http://':
+			html_object = urllib2.urlopen(request.form['url'])
+		else:
+			html_object = urllib2.urlopen('http://'+request.form['url'])
 		enc = encoding_check(html_object)
 		html_text = html_object.read()
     	keywords = get_keywords_list(html_text, enc)
