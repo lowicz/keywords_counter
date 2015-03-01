@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Keywords Counter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
-    <style>
-      .container {
-        max-width: 1000px;
-      }
-    </style>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet" media="screen">
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $( "#target" ).submit(function( event ) {
+          console.log("idzie submit");
+          $( ".preloader").show();
+        });
+      });
+    </script>
   </head>
   <body>
+    <div class="preloader"></div>
     <div class="container">
       <div class="row">
         <div class="col-sm-5 col-sm-offset-1">
           <h1>Keywords Counter</h1>
           <br>
-          <form role="form" action="" method="post">
+          <form id="target" role="form" action="" method="post">
             <div class="form-group">
               <input type="text" name="url" class="form-control" placeholder="Enter URL..." style="max-width: 300px;" value="{{ request.form.url }}" required>
             </div>
