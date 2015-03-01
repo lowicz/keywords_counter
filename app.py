@@ -1,26 +1,46 @@
+#!/usr/bin/env python
+
+"""This application counts how many times
+webpage keywords are apears in page content
+
+Author: Jakub Lowicki
+jakub.lowicki@hotmail.com"""
+
 from flask import Flask, render_template, request
 from bs4 import BeautifulSoup
-import urllib2, re, trans
+import urllib2
+import re
+import trans
 
 app = Flask(__name__)
 
+###########
+# HELPERS #
+###########
+
+
 class MyError(Exception):
+    """MyError Class"""
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
+
 def encoding_check(html_object):
+    """check page encodign"""
+
     try:
         return html_object.headers['Content-Type'].split('charset=')[1]
     except:
         return 'utf8'
 
-def encoding_page(html_text, enc):
-    return html_text.decode(enc).encode('trans')
 
 def parsing_page(html_text, enc):
-    soup = BeautifulSoup(encoding_page(html_text, enc))
+    """Getting visual content of page using bs4"""
+
+    soup = BeautifulSoup(html_text.decode(enc).encode('trans'))
     for script in soup(["script", "style"]):
         script.extract()
     text = soup.get_text()
@@ -30,32 +50,39 @@ def parsing_page(html_text, enc):
 
 
 def get_keywords_list(html_text, enc):
-    content = encoding_page(html_text, enc)
-    keywordregex = re.compile("<meta name=\"[kK]eywords\".*?content=\"([^\"]*)\"")
+    """Getting list of webpage keywors"""
+
+    content = html_text.decode(enc).encode('trans')
+    keywordregex = \
+        re.compile("<meta name=\"[kK]eywords\".*?content=\"([^\"]*)\"")
     keywordlist = keywordregex.findall(content)
     if len(keywordlist) == 0:
         raise MyError("Page don't have keywords!")
     else:
         return str(keywordlist)[3:-2].split(',')
 
-def remove_spaces(s):
-    if s[0] == ' ':
-        return s[1:]
-    elif s[-1] == ' ':
-        return s[:-1]
-    else: return s
 
 def count_key(keywords, text):
+    """Keywords Counter"""
     results = {}
     for i in keywords:
         r = re.compile("\s".join(i.strip().lower().split(' ')))
         results[i] = len(re.findall(r, text.lower()))
     return results
 
+###########
+# ROUTING #
+###########
+
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    """Render Templates, and execute helpers"""
     error = results = None
-    if request.method == 'GET': return render_template("index.html")
+
+    if request.method == 'GET':
+        return render_template("index.html")
+
     if request.method == 'POST':
         try:
             if request.form['url'][:7] == 'http://':
