@@ -4,6 +4,12 @@ import urllib2, re, trans
 
 app = Flask(__name__)
 
+class MyError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
 def encoding_check(html_object):
     try:
         return html_object.headers['Content-Type'].split('charset=')[1]
@@ -18,7 +24,7 @@ def get_keywords_list(html_text, enc):
     keywordregex = re.compile("<meta name=\"[kK]eywords\".*?content=\"([^\"]*)\"")
     keywordlist = keywordregex.findall(content)
     if len(keywordlist) == 0:
-        return ['chuje']
+        raise MyError("Page don't have keywords!")
     else:
         return str(keywordlist)[3:-2].split(',')
 
@@ -38,7 +44,7 @@ def count_key(keywords, text):
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    enc = 'utf8'
+    error = results = None
     if request.method == 'GET': return render_template("index.html")
     if request.method == 'POST':
         if request.form['url'][:7] == 'http://':
@@ -47,10 +53,13 @@ def home():
             html_object = urllib2.urlopen('http://'+request.form['url'])
         enc = encoding_check(html_object)
         html_text = html_object.read()
-        keywords = get_keywords_list(html_text, enc)
-        soup = BeautifulSoup(encoding_page(html_text, enc))
-        results = count_key(keywords, soup.get_text())
-    return render_template("index.html", results=results)
+        try:
+            keywords = get_keywords_list(html_text, enc)
+            soup = BeautifulSoup(encoding_page(html_text, enc))
+            results = count_key(keywords, soup.get_text())
+        except MyError as e:
+            error = e.value
+    return render_template("index.html", results=results, error=error)
 
 if __name__ == '__main__':
     app.run(debug=True)
