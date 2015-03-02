@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """This application counts how many times
-webpage keywords are apears in page content
+webpage keywords are apears in page content.
 
 Author: Jakub Lowicki
 jakub.lowicki@hotmail.com"""
@@ -19,17 +19,8 @@ app = Flask(__name__)
 ###########
 
 
-class MyError(Exception):
-    """MyError Class"""
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
 def encoding_check(html_object):
-    """check page encodign"""
+    """Check page encoding."""
 
     try:
         return html_object.headers['Content-Type'].split('charset=')[1]
@@ -38,7 +29,7 @@ def encoding_check(html_object):
 
 
 def parsing_page(html_text, enc):
-    """Getting visual content of page using bs4"""
+    """Getting visual content of page using bs4."""
 
     soup = BeautifulSoup(html_text.decode(enc).encode('trans'))
     for script in soup(["script", "style"]):
@@ -50,20 +41,14 @@ def parsing_page(html_text, enc):
 
 
 def get_keywords_list(html_text, enc):
-    """Getting list of webpage keywors"""
+    """Getting list of webpage keywors."""
 
-    content = html_text.decode(enc).encode('trans')
-    keywordregex = \
-        re.compile("<meta name=\"[kK]eywords\".*?content=\"([^\"]*)\"")
-    keywordlist = keywordregex.findall(content)
-    if len(keywordlist) == 0:
-        raise MyError("Page don't have keywords!")
-    else:
-        return str(keywordlist)[3:-2].split(',')
+    soup = BeautifulSoup(html_text.decode(enc).encode('trans').lower())
+    return soup.find("meta", {"name":"keywords"})['content'].split(',')
 
 
 def count_key(keywords, text):
-    """Keywords Counter"""
+    """Keywords Counter."""
     results = {}
     for i in keywords:
         r = re.compile("\s".join(i.strip().lower().split(' ')))
@@ -77,7 +62,7 @@ def count_key(keywords, text):
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    """Render Templates, and execute helpers"""
+    """Render Templates, and execute helpers."""
     error = results = None
 
     if request.method == 'GET':
@@ -94,8 +79,8 @@ def home():
             try:
                 keywords = get_keywords_list(html_text, enc)
                 results = count_key(keywords, parsing_page(html_text, enc))
-            except MyError as e:
-                error = e.value
+            except TypeError:
+                error = "Page don't have keywords!"
         except urllib2.URLError:
             error = "Wrong URL! Type correct adress"
     return render_template("index.html", results=results, error=error)
