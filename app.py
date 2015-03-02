@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """This application counts how many times
 webpage keywords are apears in page content.
 
@@ -34,17 +32,14 @@ def parsing_page(html_text, enc):
     soup = BeautifulSoup(html_text.decode(enc).encode('trans'))
     for script in soup(["script", "style"]):
         script.extract()
-    text = soup.get_text()
-    lines = (line.strip() for line in text.splitlines())
-    chunks = (phrase.strip() for line in lines for phrase in line.split(" "))
-    return '\n'.join(chunk for chunk in chunks if chunk)
+    return soup.get_text()
 
 
 def get_keywords_list(html_text, enc):
     """Getting list of webpage keywors."""
 
     soup = BeautifulSoup(html_text.decode(enc).encode('trans').lower())
-    return soup.find("meta", {"name":"keywords"})['content'].split(',')
+    return soup.find("meta", {"name": "keywords"})['content'].split(',')
 
 
 def count_key(keywords, text):
